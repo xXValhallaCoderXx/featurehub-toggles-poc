@@ -2,6 +2,7 @@ import { createContext, useState, useContext, useEffect } from "react";
 import {
   EdgeFeatureHubConfig,
   Readyness,
+  StrategyAttributeCountryName,
 } from "featurehub-javascript-client-sdk";
 
 const FeatureHubCtx = createContext(null);
@@ -10,6 +11,9 @@ const FeatureProvider = ({ user, children }) => {
   const [currentUser, setCurrentUser] = useState(user);
   const [standardToggle, setStandardToggle] = useState(false);
   const [submitColor, setSubmitColor] = useState("");
+  const [betaFeature, setBetaFeature] = useState(false);
+  const [rollOutFeature, setRollOutFeature] = useState(false);
+  const [jsonFeature, setJsonFeature] = useState({});
 
   useEffect(() => {
     setCurrentUser(user);
@@ -29,7 +33,9 @@ const FeatureProvider = ({ user, children }) => {
     fhClient = await fhConfig
       .newContext()
       .userKey(user.email)
+      .country(StrategyAttributeCountryName.NewZealand)
       .attribute_value("userType", user.userType)
+      .version("1.2.0") // Semantic version
       .build(); // create FeatureHub client
 
     fhConfig.addReadynessListener((readyness) => {
@@ -45,7 +51,16 @@ const FeatureProvider = ({ user, children }) => {
           console.log("FS GET STRING 1: ", color);
 
           const betaFeature = fhClient.getBoolean("BETA_FEATURE");
-          console.log("betaFeature", betaFeature);
+          setBetaFeature(betaFeature);
+          console.log("BETA_FEATURE", betaFeature);
+
+          const rollOutFeature = fhClient.getBoolean("ROLL_OUT_FEATURE");
+          setRollOutFeature(rollOutFeature);
+          console.log("ROLL_OUT_FEATURE", rollOutFeature);
+
+          const jsonFeature = fhClient.getJson("JSON_FEATURES");
+          console.log("JSON_FEATURES", jsonFeature);
+          setJsonFeature(jsonFeature);
         }
       }
     });
@@ -60,10 +75,22 @@ const FeatureProvider = ({ user, children }) => {
       setStandardToggle(fs.getBoolean());
       console.log("FEATURE_TOGGLE_1 UPDATED", fs.getBoolean());
     });
+
+    fhClient.feature("BETA_FEATURE").addListener((fs) => {
+      setBetaFeature(fs.getBoolean());
+      console.log("BETA_FEATURE UPDATED", fs.getBoolean());
+    });
   };
   return (
     <FeatureHubCtx.Provider
-      value={{ currentUser, standardToggle, submitColor }}
+      value={{
+        currentUser,
+        standardToggle,
+        submitColor,
+        betaFeature,
+        jsonFeature,
+        rollOutFeature,
+      }}
     >
       {children}
     </FeatureHubCtx.Provider>
