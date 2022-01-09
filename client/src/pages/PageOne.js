@@ -1,11 +1,11 @@
-import {useEffect} from "react"
-import useFeatureHub from "../hooks/use-feature-hub"
-
+import { useEffect } from "react";
+import { useFeatureHub } from "../hooks/use-feature-ctx";
 const PageOne = () => {
-  const {init} = useFeatureHub()
+  const features = useFeatureHub();
   useEffect(() => {
-    init()
-  },[])
+    console.log("FEATURES: ", features)
+   
+  }, []);
   return <div>Page One</div>;
 };
 
